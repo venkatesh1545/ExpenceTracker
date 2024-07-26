@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="loginstyles.css">
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.814.0.min.js"></script>
+</head>
+<body>
+  <div id="login-page">
+    <h2>Login - <a href="index.html">Expense Tracker</a></h2>
+    <form id="login-form">
+      <label for="login-username">Username</label>
+      <input type="text" id="login-username" placeholder="Enter username" required>
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Enter Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+  </div>
+
+  <script>
+    AWS.config.update({
+      region: 'us-east-1',
+      credentials: new AWS.Credentials('AKIAW3MEDNRNEGLXIBWE', 'OXy74gJ+qSuMmAQK/P9/1B5+B6JhY0jwknE/us5W')
+    });
+
+    const docClient = new AWS.DynamoDB.DocumentClient();
+
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+
+      const params = {
+        TableName: 'signinpage',
+        Key: {
+          username: username
+        }
+      };
+
+      docClient.get(params, function(err, data) {
+        if (err) {
+          console.error('Error retrieving data:', err);
+          alert('Error logging in. Please try again.');
+        } else {
+          if (data.Item) {
+            if (data.Item.password === password) {
+              alert('Login successful!');
+              localStorage.setItem('userName', data.Item.name);
+              localStorage.setItem('transactions', JSON.stringify(data.Item.transactions || []));
+              window.location.href = 'ExpenseTrackerPage.html';
+            } else {
+              alert('Incorrect password. Please try again.');
+            }
+          } else {
+            alert('Username not found. Please sign up.');
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

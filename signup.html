@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="loginstyles.css">
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.814.0.min.js"></script>
+</head>
+<body>
+  <div id="signup-page">
+    <h2>Sign Up - <a href="index.html">Expense Tracker</a></h2>
+    <form id="signup-form">
+      <label for="signup-name">Name</label>
+      <input type="text" id="signup-name" placeholder="Name" required>
+      <label for="signup-username">Username</label>
+      <input type="text" id="signup-username" placeholder="Username" required>
+      <label for="signup-email">Email</label>
+      <input type="email" id="signup-email" placeholder="Email" required>
+      <label for="signup-password">Password</label>
+      <input type="password" id="signup-password" placeholder="Password" required>
+      <label for="signup-confirm-password">Confirm Password</label>
+      <input type="password" id="signup-confirm-password" placeholder="Password again" required>
+      <button type="submit">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Log in</a></p>
+  </div>
+
+  <script>
+    // Step 1: Configure AWS SDK
+    AWS.config.update({
+      region: 'us-east-1', // Update to your region
+      credentials: new AWS.Credentials('AKIAW3MEDNRNEGLXIBWE', 'OXy74gJ+qSuMmAQK/P9/1B5+B6JhY0jwknE/us5W')
+    });
+
+    // Step 2: Create DynamoDB DocumentClient instance
+    const docClient = new AWS.DynamoDB.DocumentClient();
+
+    // Step 3: Add event listener for form submission
+    document.getElementById('signup-form').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Step 4: Retrieve form values
+      const name = document.getElementById('signup-name').value;
+      const username = document.getElementById('signup-username').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+      // Step 5: Validate that passwords match
+      if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      // Step 6: Prepare data for DynamoDB
+      const params = {
+        TableName: 'signinpage', // Update with your table name
+        Item: {
+          username: username,
+          name: name,
+          email: email,
+          password: password, // Note: Storing password in plain text is not secure. Use hashed passwords in a real application.
+          transactions: [] // Initialize transactions as an empty array
+        }
+      };
+
+      // Step 7: Store data in DynamoDB
+      docClient.put(params, function(err, data) {
+        if (err) {
+          console.error('Error', err);
+          alert('There was an error signing up. Please try again.');
+        } else {
+          // Store user's name in localStorage
+          localStorage.setItem('userName', name);
+          localStorage.setItem('transactions', JSON.stringify([])); // Initialize transactions in localStorage
+          alert('Signup successful! Please login.');
+          window.location.href = 'login.html';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

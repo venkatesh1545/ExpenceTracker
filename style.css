@@ -1,0 +1,201 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #010200;
+    justify-content: center;
+    align-items: center;
+}
+
+.budget-container {
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.app-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.app-title a {
+    text-decoration: none;
+    color: #fefefe;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.user-greeting {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.user-greeting h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.budget-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.balance, .income, .outcome {
+    background-color: #e3e3e3;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    flex: 1;
+    margin-right: 10px;
+    position: relative;
+}
+
+.balance .value, .income .income-total, .outcome .outcome-total {
+    font-size: 24px;
+    color: rgb(54, 210, 54);
+}
+
+.account {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.chart {
+    margin: 15px 0;
+}
+
+.balance .title, .income .title, .outcome .title {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.budget-dashboard {
+    background-color: #e7e1e1;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.dash-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.toggle {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+}
+
+.toggle div {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.toggle .active {
+    background-color: #0f9d02;
+    color: white;
+}
+
+.toggle div:hover {
+    background-color: #ddd;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content.hide {
+    display: none;
+}
+
+.input {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input input {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.add-income, .add-expense {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    color: green;
+}
+
+.add-income img, .add-expense img {
+    width: 24px;
+    height: 24px;
+}
+
+ul.list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+ul.list li {
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+ul.list li.income {
+    border-left: 5px solid green;
+}
+
+ul.list li.expense {
+    border-left: 5px solid red;
+}
+
+.edit, .delete {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.edit:hover {
+    color: #007bff;
+}
+
+.delete:hover {
+    color: red;
+}
+.logout-btn {
+    position: absolute; /* Allows you to position the element with top, right, bottom, or left properties */
+    top: 20px; /* Distance from the top of the container */
+    right: 20px; /* Distance from the right edge of the container */
+    padding: 10px;
+    background-color: #7ca7db;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    width: 150px;
+    text-align: center; /* Center the text inside the button */
+}
+
+.logout-btn:hover {
+    background-color: #0056b3;
+}

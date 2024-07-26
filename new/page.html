@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Photos to S3</title>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1030.0.min.js"></script>
+    <link rel="stylesheet" href="pagestyles.css">
+</head>
+<body>
+    <h1>Upload Photos to S3</h1>
+    <input type="file" id="fileInput" multiple />
+    <button id="uploadButton" onclick="uploadPhotos()">Upload</button>
+    <button id="viewFilesButton" onclick="toggleUploadedFiles()">View Uploaded Files</button>
+
+    <div id="fileList"></div>
+    <div id="uploadedFilesBox">
+        <div id="uploadedFiles"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const bucketName = 'ihdin';
+        const region = 'ap-southeast-2';
+        const accessKeyId = 'AKIATCKARFF7QV3HNQ22';
+        const secretAccessKey = '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';
+
+        // Initialize the Amazon Cognito credentials provider
+        AWS.config.update({
+            accessKeyId: accessKeyId,
+            secretAccessKey: secretAccessKey,
+            region: region
+        });
+
+        const s3 = new AWS.S3({
+            apiVersion: '2006-03-01',
+            params: { Bucket: bucketName }
+        });
+
+        function uploadPhotos() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                alert('Please choose files to upload first.');
+                return;
+            }
+
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+
+            Array.from(files).forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'fileItem';
+                fileItem.innerHTML = `<strong>${file.name}</strong> <div class="progress"><div class="progress-bar" id="progress-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}">0%</div></div>`;
+                fileList.appendChild(fileItem);
+
+                const params = {
+                    Bucket: bucketName,
+                    Key: file.name,
+                    Body: file,
+                    ACL: 'public-read'  // or 'private' based on your requirement
+                };
+
+                s3.upload(params).on('httpUploadProgress', function(evt) {
+                    const progress = Math.round((evt.loaded / evt.total) * 100);
+                    const progressBar = document.getElementById(`progress-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`);
+                    if (progressBar) {
+                        progressBar.style.width = progress + '%';
+                        progressBar.innerHTML = progress + '%';
+                        if (progress === 100) {
+                            progressBar.style.backgroundColor = '#28a745'; // green color
+                        }
+                    }
+                }).send(function(err, data) {
+                    if (err) {
+                        console.log(err, err.stack);
+                        alert(`Error uploading file: ${file.name}`);
+                    } else {
+                        console.log('Successfully uploaded file.', data);
+                        alert(`Successfully uploaded file: ${file.name}`);
+                        displayUploadedFiles();
+                    }
+                });
+            });
+        }
+
+        function displayUploadedFiles() {
+            const uploadedFilesDiv = document.getElementById('uploadedFiles');
+            uploadedFilesDiv.innerHTML = '<h2>Uploaded Files</h2>';
+
+            s3.listObjectsV2({ Bucket: bucketName }, function(err, data) {
+                if (err) {
+                    console.log(err, err.stack);
+                    alert('Error listing files.');
+                } else {
+                    data.Contents.forEach(file => {
+                        const fileLink = document.createElement('a');
+                        fileLink.href = `https://${bucketName}.s3.${region}.amazonaws.com/${file.Key}`;
+                        fileLink.innerText = file.Key;
+                        fileLink.target = '_blank';
+                        uploadedFilesDiv.appendChild(fileLink);
+                        uploadedFilesDiv.appendChild(document.createElement('br'));
+                    });
+                }
+            });
+        }
+
+        function toggleUploadedFiles() {
+            const uploadedFilesBox = document.getElementById('uploadedFilesBox');
+            const isDisplayed = uploadedFilesBox.style.display === 'block';
+            uploadedFilesBox.style.display = isDisplayed ? 'none' : 'block';
+            if (!isDisplayed) {
+                displayUploadedFiles(); // Refresh the list when opening
+            }
+        }
+
+        // Initial call to display uploaded files
+        displayUploadedFiles();
+    </script>
+</body>
+</html>

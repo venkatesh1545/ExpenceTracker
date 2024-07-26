@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="app-title">
+        <a href="index.html"><b>Expense Tracker</b></a>
+    </div>
+    <div class="budget-container">
+        
+        <div class="user-greeting">
+            <h2>Hello, <b><span id="username">User</span>...</b></h2>
+        </div>
+        <div class="budget-header">
+            <div class="balance">
+                <div class="title">Balance</div>
+                <div class="value"><i class="fas fa-wallet"></i> ₹0</div>
+            </div>
+            <div class="account">
+                <div class="income">
+                    <div class="title">Income</div>
+                    <div class="income-total"><i class="fas fa-hand-holding-usd"></i> ₹0</div>
+                </div>
+                <div class="chart"></div>
+                <div class="outcome">
+                    <div class="title">Expense</div>
+                    <div class="outcome-total"><i class="fas fa-money-bill-wave"></i> ₹0</div>
+                </div>
+            </div>
+        </div>
+        <div class="budget-dashboard">
+            <div class="dash-title">Dashboard</div>
+            <div class="toggle">
+                <div class="tab1 active" data-tab="all">All</div>
+                <div class="tab2" data-tab="income">Income</div>
+                <div class="tab3" data-tab="expense">Expense</div>
+            </div>
+            <div id="all" class="tab-content active">
+                <ul class="list" id="all-list"></ul>
+                <button id="download-btn">Download</button>
+                <button id="delete-all-btn">Delete All</button>
+            </div>
+            <div id="income" class="tab-content">
+                <div class="input">
+                    <input type="text" id="income-title-input" placeholder="Income Title">
+                    <input type="number" id="income-amount-input" placeholder="Income Amount">
+                    <div class="add-income"><i class="fas fa-plus"></i></div>
+                </div>
+                <ul class="list" id="income-list"></ul>
+            </div>
+            <div id="expense" class="tab-content">
+                <div class="input">
+                    <input type="text" id="expense-title-input" placeholder="Expense Title">
+                    <input type="number" id="expense-amount-input" placeholder="Expense Amount">
+                    <div class="add-expense"><i class="fas fa-plus"></i></div>
+                </div>
+                <ul class="list" id="expense-list"></ul>
+            </div>            
+        </div>
+    </div>
+
+    <a href="index.html" class="logout-btn">Logout</a>
+
+    <script src="budget.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aws-sdk@2.1335.0/dist/aws-sdk.min.js"></script>
+    <script>
+        // Initialize AWS DynamoDB
+        AWS.config.update({
+            region: "us-east-1", // Replace with your region
+            credentials: new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: "us-east-1:example-pool-id" // Replace with your Identity Pool ID
+            })
+        });
+        const docClient = new AWS.DynamoDB.DocumentClient();
+        const tableName = "Transactions"; // Replace with your DynamoDB table name
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Display logged-in user's name
+            const userName = localStorage.getItem('userName') || 'User';
+            document.getElementById('username').textContent = userName;
+
+            // Load user's transactions from DynamoDB
+            loadTransactions();
+
+            // Add event listener for delete all button
+            document.getElementById('delete-all-btn').addEventListener('click', deleteAllTransactions);
+        });
+
+        function loadTransactions() {
+            const userName = localStorage.getItem('userName');
+            const params = {
+                TableName: tableName,
+                KeyConditionExpression: "#user = :user",
+                ExpressionAttributeNames: {
+                    "#user": "username"
+                },
+                ExpressionAttributeValues: {
+                    ":user": userName
+                }
+            };
+
+            docClient.query(params, function(err, data) {
+                if (err) {
+                    console.error("Unable to read items. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    data.Items.forEach(transaction => {
+                        addTransactionToDOM(transaction);
+                    });
+                }
+            });
+        }
+
+        function saveTransaction(transaction) {
+            const userName = localStorage.getItem('userName');
+            const params = {
+                TableName: tableName,
+                Item: {
+                    username: userName,
+                    title: transaction.title,
+                    amount: transaction.amount,
+                    type: transaction.type
+                }
+            };
+
+            docClient.put(params, function(err, data) {
+                if (err) {
+                    console.error("Unable to add transaction. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    console.log("Transaction added:", JSON.stringify(data, null, 2));
+                }
+            });
+        }
+
+        function deleteAllTransactions() {
+            const userName = localStorage.getItem('userName');
+            const params = {
+                TableName: tableName,
+                KeyConditionExpression: "#user = :user",
+                ExpressionAttributeNames: {
+                    "#user": "username"
+                },
+                ExpressionAttributeValues: {
+                    ":user": userName
+                }
+            };
+
+            docClient.query(params, function(err, data) {
+                if (err) {
+                    console.error("Unable to delete items. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    data.Items.forEach(item => {
+                        const deleteParams = {
+                            TableName: tableName,
+                            Key: {
+                                username: userName,
+                                title: item.title
+                            }
+                        };
+                        docClient.delete(deleteParams, function(err, data) {
+                            if (err) {
+                                console.error("Unable to delete transaction. Error JSON:", JSON.stringify(err, null, 2));
+                            } else {
+                                console.log("Transaction deleted:", JSON.stringify(data, null, 2));
+                            }
+                        });
+                    });
+                    // Clear UI after deletion
+                    clearElement([document.getElementById('expense-list'), document.getElementById('income-list'), document.getElementById('all-list')]);
+                }
+            });
+        }
+
+        function addTransactionToDOM(transaction) {
+            const list = document.getElementById(transaction.type === 'income' ? 'income-list' : 'expense-list');
+            const item = document.createElement('li');
+            item.className = transaction.type;
+            item.textContent = `${transaction.title}: ₹${transaction.amount}`;
+
+            const editIcon = document.createElement('i');
+            editIcon.className = 'fas fa-edit edit';
+            const deleteIcon = document.createElement('i');
+            deleteIcon.className = 'fas fa-trash delete';
+
+            item.appendChild(editIcon);
+            item.appendChild(deleteIcon);
+            list.appendChild(item);
+
+            // Add to 'All' tab with color coding
+            const allList = document.getElementById('all-list');
+            const allItem = document.createElement('li');
+            allItem.className = transaction.type;
+            allItem.textContent = `${transaction.title}: ₹${transaction.amount}`;
+            allItem.style.color = transaction.type === 'income' ? 'green' : 'red';
+            
+            allItem.appendChild(editIcon.cloneNode(true));
+            allItem.appendChild(deleteIcon.cloneNode(true));
+            allList.appendChild(allItem);
+        }
+
+        function clearElement(elements) {
+            elements.forEach(el => el.innerHTML = '');
+        }
+
+        // Existing addTransactionToDOM, add transaction logic, and other functions...
+    </script>
+</body>
+</html>
